@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using Movies_APIs.Helpers;
 
 namespace Movies_APIs
 {
@@ -62,6 +63,10 @@ namespace Movies_APIs
             services.AddTransient<MyActionFilter>();
 
 
+            services.AddScoped<IFileStorageService, InAppStorageService>();
+
+            services.AddHttpContextAccessor();
+
             services.AddCors(options =>
             {
                 options.AddDefaultPolicy(builder =>
@@ -85,7 +90,8 @@ namespace Movies_APIs
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Movies_APIs v1"));
 
             }
-
+            // Fro wwwroot
+            app.UseStaticFiles();
             app.UseHttpsRedirection();
 
             app.UseRouting();

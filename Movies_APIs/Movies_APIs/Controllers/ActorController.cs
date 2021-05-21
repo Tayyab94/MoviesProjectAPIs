@@ -2,7 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Movies_APIs.DTOs;
+using Movies_APIs.Entities;
 using Movies_APIs.Entities.Contaxt;
+using Movies_APIs.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,11 +18,14 @@ namespace Movies_APIs.Controllers
     {
         private readonly ApplicationDbContaxt context;
         private readonly IMapper mapper;
+        private readonly IFileStorageService fileStorageService;
+        private readonly string containerName = "actors";
 
-        public ActorController(ApplicationDbContaxt context, IMapper mapper)
+        public ActorController(ApplicationDbContaxt context, IMapper mapper, IFileStorageService fileStorageService)
         {
             this.context = context;
             this.mapper = mapper;
+            this.fileStorageService = fileStorageService;
         }
 
 
@@ -48,9 +53,21 @@ namespace Movies_APIs.Controllers
 
         [HttpPost]
 
-        public async Task<ActionResult>Post([FromBody]ActorCreationDTO model)
+        public async Task<ActionResult>Post([FromForm]ActorCreationDTO model)
         {
-            throw new  NotImplementedException();
+           var actor=mapper.Map<Actor>(model);
+
+            if(model.Picture!= null)
+            {
+                actor.Picture = await fileStorageService.SaveFile(containerName, model.Picture);
+            }
+
+
+            context.Actors.Add(actor);
+
+            await context.SaveChangesAsync();
+
+            return NoContent();
         }
 
         [HttpPut("{id:int}")]
@@ -66,10 +83,13 @@ namespace Movies_APIs.Controllers
         {
             var actor = await context.Actors.FirstOrDefaultAsync(s => s.Id == id);
 
+           
             if (actor == null)
             {
                 return NotFound();
             }
+
+          await this.fileStorageService.DeleteFile(actor.Picture, containerName);
 
              context.Actors.Remove(actor);
 
