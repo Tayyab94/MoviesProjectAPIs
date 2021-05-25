@@ -8,6 +8,7 @@ using Movies_APIs.CustomActionFilters;
 using Movies_APIs.DTOs;
 using Movies_APIs.Entities;
 using Movies_APIs.Entities.Contaxt;
+using Movies_APIs.Helpers;
 using Movies_APIs.Services;
 using System;
 using System.Collections.Generic;
@@ -42,9 +43,13 @@ namespace Movies_APIs.Controllers
         
         [HttpGet]
      
-        public async Task<ActionResult<List<GenresDTO>>> Get()
+        public async Task<ActionResult<List<GenresDTO>>> Get([FromQuery] PaginationDTO pagination)
         {
-            var genres= await this.contaxt.Genres.ToListAsync();
+
+            var querable =this.contaxt.Genres.AsQueryable();
+            await HttpContext.InsertParametersPaginationInHeader(querable);
+            //var genres= await this.contaxt.Genres.ToListAsync();
+            var genres = await querable.OrderBy(s => s.Name).Paginate(pagination).ToListAsync();
 
             return mapper.Map<List<GenresDTO>>(genres);
 

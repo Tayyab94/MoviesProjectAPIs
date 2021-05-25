@@ -18,6 +18,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using Movies_APIs.Helpers;
+using NetTopologySuite.Geometries;
+using NetTopologySuite;
 
 namespace Movies_APIs
 {
@@ -34,9 +36,11 @@ namespace Movies_APIs
         public void ConfigureServices(IServiceCollection services)
         {
 
-            services.AddDbContext<ApplicationDbContaxt>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+            services.AddDbContext<ApplicationDbContaxt>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"),
+                sqlOption => sqlOption.UseNetTopologySuite()));
 
 
+          
             //services.AddControllers();
 
             // Application Custom Exception  Filter
@@ -50,6 +54,15 @@ namespace Movies_APIs
 
 
             services.AddAutoMapper(typeof(Startup));
+
+            services.AddSingleton(provider => new MapperConfiguration(config => {
+                var geometryFactory = provider.GetRequiredService<GeometryFactory>();
+                config.AddProfile(new AutoMapperProfiles(geometryFactory));
+             }));
+
+            services.AddSingleton<GeometryFactory>(NtsGeometryServices
+              .Instance.CreateGeometryFactory(srid: 4326));
+
 
             services.AddSwaggerGen(c =>
             {
@@ -72,7 +85,7 @@ namespace Movies_APIs
                 options.AddDefaultPolicy(builder =>
                 {
                     builder.WithOrigins("http://localhost:4200")
-                    .AllowAnyHeader().AllowAnyMethod();
+                    .AllowAnyHeader().AllowAnyMethod().WithExposedHeaders(new string[] { "totalAmountOfRecords" });
                 });
 
             });

@@ -19,5 +19,7 @@ namespace Movies_APIs.Entities.Contaxt
         public DbSet<Genres> Genres { get; set; }
 
         public DbSet<Actor> Actors { get; set; }
+
+        public DbSet<MoviesTheather> MoviesTheathers { get; set; }
     }
 }

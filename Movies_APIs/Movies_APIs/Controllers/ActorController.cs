@@ -56,7 +56,7 @@ namespace Movies_APIs.Controllers
         public async Task<ActionResult>Post([FromForm]ActorCreationDTO model)
         {
            var actor=mapper.Map<Actor>(model);
-
+   
             if(model.Picture!= null)
             {
                 actor.Picture = await fileStorageService.SaveFile(containerName, model.Picture);
@@ -71,9 +71,26 @@ namespace Movies_APIs.Controllers
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult> Put(int id,[FromBody] ActorCreationDTO model)
+        public async Task<ActionResult> Put(int id,[FromForm] ActorCreationDTO model)
         {
-            throw new NotImplementedException();
+            var actor =await context.Actors.Where(s => s.Id == id).FirstOrDefaultAsync();
+
+            if(actor == null)
+            {
+                return NotFound();
+            }
+
+            actor = mapper.Map(model, actor);
+
+            if(model.Picture != null)
+            {
+                actor.Picture = await fileStorageService.EditFile(containerName, model.Picture, actor.Picture);
+            }
+
+            await context.SaveChangesAsync();
+
+            return NoContent();
+
         }
 
 
